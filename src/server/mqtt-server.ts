@@ -1,19 +1,10 @@
-//import mqtt from 'mqtt';
+import mqtt, { type MqttClient } from 'mqtt';
 //declare function require(name: string);
-const mqtt = require('mqtt')
-const client = mqtt.connect('mqtt://test.mosquitto.org')
+//const mqtt = require('mqtt')
+const client: MqttClient = mqtt.connect('mqtt://test.mosquitto.org:1883')
 
-client.on('connect', function() {
-    client.subscribe('presence', function(err) {
-        if (!err) {
-            client.publish('presence', 'Hello mqtt')
-        }
-    })
+client.on('connect', () => {
+    console.log('connected')
 })
 
-client.on('message', function(topic, message) {
-    // message is Buffer
-    console.log("message received:", message.toString())
-})
-
-module.exports = client
+export { client }
