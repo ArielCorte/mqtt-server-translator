@@ -1,45 +1,21 @@
-import { type MqttClient, connect } from 'mqtt';
-import { createServer } from 'http';
+import mqtt from 'mqtt';
 import { Server } from 'socket.io';
 
-const httpServer = createServer();
-const io = new Server(httpServer, {
-    cors: {
-        origin: '*',
-    },
+const client = mqtt.connect('mqtt://test.mosquitto.org');
+const io = new Server({ cors: { origin: '*' } });
+console.log('initializing mqtt server');
+
+client.on('connect', () => {
+    console.log('MQTT client connected');
+    client.subscribe('test');
 });
 
-io.on('connection', (socket) => {
-    console.log('Client connected to MQTT endpoint');
-    socket.on('disconnect', () => {
-        console.log('Client disconnected from MQTT endpoint');
-    });
+client.on('message', (topic, message) => {
+    console.log(`MQTT message received: ${message.toString()}`);
+    io.emit('mqtt_message', message.toString());
 });
 
-subscribeToTopic('my/mqtt/topic');
-
-httpServer.listen(3001, () => {
-    console.log('Server listening on port 3000');
+io.listen(3000, () => {
+    console.log('Socket.io server listening on port 3000');
 });
 
-export function subscribeToTopic(topic: string): MqttClient {
-    const client = connect('mqtt://test.mosquitto.org:1883');
-
-    client.on('connect', () => {
-        console.log('Connected to MQTT broker');
-        client.subscribe(topic, (err) => {
-            if (err) {
-                console.log('Error subscribing to topic', err);
-            } else {
-                console.log('Subscribed to topic', topic);
-            }
-        })
-    })
-
-    client.on('message', (topic, message) => {
-        console.log(`Received message on topic ${topic}:`, message.toString());
-        io.emit('message', message.toString());
-    })
-
-    return client;
-}

@@ -1,17 +1,36 @@
-import { type NextPage } from "next";
-import { useEffect } from "react";
-import io from "socket.io-client";
+import { useState } from 'react';
+import axios from 'axios';
+import { io, type Socket } from 'socket.io-client';
+import type { NextPage } from 'next';
 
-const socket = io();
+const socket: Socket = io('http://localhost:3000');
 
-const Home: NextPage = () => {
+const Index: NextPage = () => {
+    const [message, setMessage] = useState('');
 
-    useEffect(() => {
-        console.log('trying to connect to socket')
-        socket.on("mqtt_message", (message) => {
-            console.log('Received mqtt message: ', message);
-        })
-    }, []);
-    return <div>Here is mqtt server</div>;
-};
-export default Home;
+    socket.on('connect', () => {
+        console.log('Socket.io client connected');
+    });
+
+    socket.on('mqtt_message', (data: string) => {
+        console.log(`MQTT message received: ${data}`);
+        setMessage(data);
+    });
+
+    const handleClick = async () => {
+        try {
+            await axios.post('/api/mqtt', { message: 'Hello, MQTT!' });
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    return (
+        <div>
+            <h1>{message}</h1>
+            <button onClick={handleClick}>Send MQTT message</button>
+        </div>
+    );
+}
+
+export default Index;

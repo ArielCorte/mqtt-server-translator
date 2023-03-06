@@ -1,24 +1,24 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
-import { subscribeToTopic } from '../../server/mqtt-server'
+import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
+import { io } from 'socket.io-client';
 
-export default function handler(
-    req: NextApiRequest,
-    res: NextApiResponse
-) {
-    const client = subscribeToTopic('test');
+const socket = io('http://localhost:3000');
 
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+const handler: NextApiHandler = (req: NextApiRequest, res: NextApiResponse) => {
+    if (req.method === 'POST') {
+        if (res.socket.server.io) {
+            console.log('Socket.io server is running');
+        } else {
+            console.log('Socket.io server is not running');
+        }
+        const { message } = req.body;
 
-    req.socket.setTimeout(0);
-    req.socket.setNoDelay(true);
-    req.socket.setKeepAlive(true);
+        socket.emit('mqtt_publish', message);
 
-    req.socket.on('close', () => {
-        console.log('Connection closed');
-        client.end();
-    })
+        res.status(200).json({ message: 'Message sent to MQTT broker' });
+    } else {
+        res.status(400).json({ message: 'Invalid request method' });
+    }
+};
 
-    res.write('\n')
-}
+export default handler;
+
