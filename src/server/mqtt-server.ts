@@ -1,21 +1,29 @@
+// connect to mqtt server
 import mqtt from 'mqtt';
-import { Server } from 'socket.io';
 
-const client = mqtt.connect('mqtt://test.mosquitto.org');
-const io = new Server({ cors: { origin: '*' } });
-console.log('initializing mqtt server');
+export function connectToBroker() {
+    console.log('connecting to mqtt server')
+    const client = mqtt.connect('mqtt://test.mosquitto.org:1883')
+    client.on('connect', () => {
+        client.subscribe('lacienradioarielcorte', (err) => {
+            if (err) return err
+        })
+    })
+    client.on('message', (topic, message) => {
+        console.log(`message received on topic ${topic}: `, message.toString())
+        return message.toString()
+    })
+    return client
+}
 
-client.on('connect', () => {
-    console.log('MQTT client connected');
-    client.subscribe('test');
-});
+export function subscribeToTopic(client: mqtt.Client, topic: string, callback: (message: string) => void) {
+    client.subscribe(topic, (err) => {
+        if (err) return err
+        callback('subscribed to topic')
+        return 'success'
+    })
+}
 
-client.on('message', (topic, message) => {
-    console.log(`MQTT message received: ${message.toString()}`);
-    io.emit('mqtt_message', message.toString());
-});
-
-io.listen(3000, () => {
-    console.log('Socket.io server listening on port 3000');
-});
-
+export function publishToTopic(client: mqtt.Client, topic: string, message: string) {
+    client.publish(topic, message)
+}
