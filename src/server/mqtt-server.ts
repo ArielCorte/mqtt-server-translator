@@ -3,9 +3,9 @@ import mqtt from 'mqtt';
 
 export function connectToBroker() {
     console.log('connecting to mqtt server')
-    const client = mqtt.connect('mqtt://test.mosquitto.org:1883')
+    const client = mqtt.connect('mqtt://172.104.199.38')
     client.on('connect', () => {
-        client.subscribe('lacienradioarielcorte', (err) => {
+        client.subscribe('dev1/corriente', (err) => {
             if (err) return err
         })
     })
